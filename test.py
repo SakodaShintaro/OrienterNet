@@ -5,7 +5,7 @@ from maploc.utils.viz_localization import (
     add_circle_inset,
 )
 from maploc.utils.viz_2d import plot_images
-from maploc.osm.viz import Colormap, plot_nodes
+from maploc.osm.viz import Colormap
 from maploc.osm.tiling import TileManager
 from maploc.osm.viz import GeoPlotter
 import matplotlib.pyplot as plt
@@ -33,9 +33,6 @@ if __name__ == "__main__":
     # To reduce the memory usage, we can reduce the tile size in the next cell.
     demo = Demo(num_rotations=256, device='cpu')
 
-    # no EXIF data: provide a coarse location prior as address
-    prior_address = "ETH CAB Zurich"
-
     tile_size_meters = 128
 
     image = read_image(image_path)
@@ -62,7 +59,6 @@ if __name__ == "__main__":
     plot = GeoPlotter(zoom=16)
     plot.points(prior_latlon[:2], "red", name="location prior", size=10)
     plot.bbox(proj.unproject(bbox), "blue", name="map tile")
-    plot.fig.show("notebook")
 
     # Query OpenStreetMap for this area
     tiler = TileManager.from_bbox(proj, bbox + 10, demo.config.data.pixel_per_meter)
@@ -70,12 +66,6 @@ if __name__ == "__main__":
 
     # Show the inputs to the model: image and raster map
     map_viz = Colormap.apply(canvas.raster)
-    plot_images([image, map_viz], titles=["input image", "OpenStreetMap raster"])
-    plot_nodes(1, canvas.raster[2], fontsize=6, size=10)
-
-    ###
-    ###
-    ###
 
     # Run the inference
     uv, yaw, prob, neural_map, image_rectified = demo.localize(
@@ -92,13 +82,3 @@ if __name__ == "__main__":
     save_path = "./output.png"
     plt.savefig(save_path, bbox_inches='tight', pad_inches=0.05)
     print(f"Saved visualization to {save_path}")
-
-    # Plot as interactive figure
-    bbox_latlon = proj.unproject(canvas.bbox)
-    plot = GeoPlotter(zoom=16.5)
-    plot.raster(map_viz, bbox_latlon, opacity=0.5)
-    plot.raster(likelihood_overlay(prob.numpy().max(-1)), proj.unproject(bbox))
-    plot.points(prior_latlon[:2], "red", name="location prior", size=10)
-    plot.points(proj.unproject(canvas.to_xy(uv)), "black", name="argmax", size=10)
-    plot.bbox(bbox_latlon, "blue", name="map tile")
-    plot.fig.show()
