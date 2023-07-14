@@ -25,7 +25,7 @@ class OrienterNetNode(Node):
     def __init__(self):
         super().__init__("orienter_net_node")
         self.get_logger().info(f"Initializing ...")
-        self.demo = Demo(num_rotations=256, device='cpu')
+        self.demo = Demo(num_rotations=256, device='cuda')
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
             history=HistoryPolicy.KEEP_LAST,
