@@ -58,7 +58,6 @@ class OrienterNetNode(Node):
             return
         else:
             latlon = self.latest_latlon
-        latlon = (35.68601896795643, 139.6890468576763)
         latlon = np.array(latlon)
         proj = Projection(*latlon)
         center = proj.project(latlon)
