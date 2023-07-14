@@ -94,7 +94,7 @@ def copy_image(im, ax):
     prop = im.properties()
     prop.pop("children")
     prop.pop("size")
-    prop.pop("tightbbox")
+    prop.pop("tightbbox", None)
     prop.pop("transformed_clip_path_and_affine")
     prop.pop("window_extent")
     prop.pop("figure")
