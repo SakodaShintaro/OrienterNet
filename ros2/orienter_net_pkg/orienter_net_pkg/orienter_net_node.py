@@ -38,6 +38,8 @@ class OrienterNetNode(Node):
             CameraInfo, "/sensing/camera/traffic_light/camera_info", self.camera_info_callback, qos_profile)
         self.sub_pose = self.create_subscription(
             PoseStamped, "/localization/pose_twist_fusion_filter/pose", self.pose_callback, qos_profile)
+        self.pub_input_image = self.create_publisher(
+            Image, "/orienter_net_node/input_image", 10)
         self.pub_result_image = self.create_publisher(
             Image, "/orienter_net_node/result", 10)
         self.latest_latlon = None
@@ -45,6 +47,7 @@ class OrienterNetNode(Node):
 
     def image_callback(self, msg: Image):
         self.get_logger().info(f"Received image")
+        self.pub_input_image.publish(msg)
         image = self.bridge.imgmsg_to_cv2(msg, "rgb8")
 
         tile_size_meters = 128
