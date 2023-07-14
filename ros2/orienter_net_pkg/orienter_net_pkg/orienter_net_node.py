@@ -18,6 +18,7 @@ from maploc.utils.viz_localization import (
 )
 import matplotlib.pyplot as plt
 from get_lat_lon import get_lat_lon
+import cv2
 
 
 class OrienterNetNode(Node):
@@ -37,6 +38,8 @@ class OrienterNetNode(Node):
             CameraInfo, "/sensing/camera/traffic_light/camera_info", self.camera_info_callback, qos_profile)
         self.sub_pose = self.create_subscription(
             PoseStamped, "/localization/pose_twist_fusion_filter/pose", self.pose_callback, qos_profile)
+        self.pub_result_image = self.create_publisher(
+            Image, "/orienter_net_node/result", 10)
         self.latest_latlon = None
         self.get_logger().info(f"Ready")
 
@@ -96,9 +99,14 @@ class OrienterNetNode(Node):
         ax.scatter(*canvas.to_uv(bbox.center), s=5, c="red")
         plot_dense_rotations(ax, prob, w=0.005, s=1/25)
         add_circle_inset(ax, uv)
-        save_path = "./output.png"
-        plt.savefig(save_path, bbox_inches='tight', pad_inches=0.05)
-        print(f"Saved visualization to {save_path}")
+
+        # publish plot data as result image
+        fig = plt.gcf()
+        fig.canvas.draw()
+        result_image_cv2 = np.array(fig.canvas.renderer.buffer_rgba())
+        result_image_cv2 = cv2.cvtColor(result_image_cv2, cv2.COLOR_RGBA2RGB)
+        result_image = self.bridge.cv2_to_imgmsg(result_image_cv2, "rgb8")
+        self.pub_result_image.publish(result_image)
 
     def camera_info_callback(self, msg: CameraInfo):
         pass
@@ -115,7 +123,6 @@ class OrienterNetNode(Node):
         # )
 
     def pose_callback(self, msg: PoseStamped):
-        # 4x4行列に変換
         pose = msg.pose
         self.latest_latlon = get_lat_lon(pose.position.x, pose.position.y)
 
